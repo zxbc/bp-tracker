@@ -1,6 +1,6 @@
 # bp-tracker — Implementation Plan
 
-Status: planning. This document is the single source of truth for the first implementation pass.
+Status: implemented (v0.1.1 released). This document is the source of truth for the first implementation pass; §11 is the changelog.
 
 ## 1. Goals
 
@@ -136,10 +136,11 @@ src/main/kotlin/app/bp/
 
 ### Entry screen details
 
-- Display: the digit stream in a mono/rounded display (e.g. `1 2 1 8 1 7 1`, last digit highlighted) **and**, when parsed, the big human form `121 / 81` with `71 bpm` beneath; color/size shifts per state (waiting=muted, parsed=primary/green, unresolved=amber, too long=error red). Transitions animated.
-- Numpad: 3×4 grid, keys ≥ 64dp, ripple + scale-down on press, haptic tick. ⌫ spans a full row segment, Cancel in its corner. Backspace on empty stream = no-op.
-- Confirm bar: hidden (height 0) until `parsed`; slides up with OK (full-width primary), Edit, Cancel (outlined). OK disabled in all other states.
-- Layout is a `Column` with weighted numpad — fills any phone size, works in dark mode and large text sizes.
+- Display: the digit stream in a mono display with the last digit highlighted in a chip; when parsed, the big human form — three labeled groups `121 / 81 / 71` under `SYS · DIA · HR` (mono, values in primary color). Color/size shifts per state (waiting=muted, parsed=primary, unresolved=error red, too long=error red). The display `Box` takes all flexible space (`weight(1f)`) and centers its content.
+- Numpad: 4 rows (1–9, then 0 / ⌫ / empty gap), **fixed 56 dp keys** anchored at the bottom in the thumb zone, spring press-down animation + haptic tick. ⌫ is a regular-width key. Backspace on empty stream = no-op.
+- Top row: title + `FilledTonalButton` Cancel — always visible, disabled while the stream is empty.
+- Confirm bar: hidden until `parsed` (and not editing); slides in **in the layout flow above the numpad** — structurally impossible to push off-screen. OK (flexible-width primary, checkmark icon), Edit, Cancel.
+- **Layout rule (learned in v0.1.0): the numpad must never take weighted space.** In v0.1.0 the pad's rows used `Modifier.weight(1f)`, so the pad greedily filled the whole screen, squeezed the display to zero height and pushed the confirm bar off-screen — entry was unusable on device (see §11).
 
 ### Review screen details
 
@@ -184,4 +185,25 @@ Phase 2 candidates (not in v1): CSV export, explicit morning/night labels, targe
 ## 10. Testing
 
 - Parser: pure JVM unit tests (above) — the highest-value tests in the project.
-- UI: manual on emulator per milestone; optional Compose smoke test for the entry flow (type → parsed → save → row in list) once the flow exists.
+- UI: Robolectric + Compose UI tests (`ui-test-junit4` + `robolectric`, `isIncludeAndroidResources = true`), running on the JVM — no emulator needed in this environment. `EntryScreenTest` drives the real screen with synthetic clicks at phone size (`@Config(sdk = [34], qualifiers = "w412dp-h915dp-420dpi")` — Robolectric's qualifier parser requires the `dpi` suffix on the density token):
+  - display + numpad visible before any input (regression guard for the v0.1.0 layout bug);
+  - typing `1218171` shows the parsed groups + confirm bar, OK registers the save;
+  - typed digits are shown live (last-digit chip) and backspace returns to the hint.
+  - Note: the test harness's digit state must be Compose snapshot state (`mutableStateOf`) — a plain `var` updates but never invalidates composition, so screens under test never re-render.
+- UI: manual on a real device per release (v0.1.0 device testing is what caught the §11 layout bug; Robolectric tests now guard the regression).
+
+## 11. Changelog
+
+### v0.1.1 (2026-11-26)
+
+- **Entry screen redesign — fix for the v0.1.0 device bug.** v0.1.0 shipped with numpad rows using `Modifier.weight(1f)` and no fixed key height: the pad greedily filled the entire screen, the live display was squeezed to zero height (typed digits invisible), the confirm bar was pushed off-screen (OK never appeared), and the quarter-screen keys made one-handed typing hard. The redesign:
+  - top row: title + prominent `FilledTonalButton` Cancel (always visible; disabled while the stream is empty);
+  - display takes all flexible space (`weight(1f)`), shows hint / live digit stream with highlighted last digit / parsed `SYS · DIA · HR` labeled groups / error states;
+  - confirm bar slides in **in the layout flow above the numpad** — structurally impossible to push off-screen;
+  - numpad: fixed 56 dp keys, 4 rows anchored at the bottom (thumb zone), spring press animation + haptic tick.
+- **Robolectric UI tests** added (3 tests, §10) as the regression guard for the layout bug.
+- Version 0.1.0 → 0.1.1 (versionCode 2).
+
+### v0.1.0 (2026-11-26)
+
+- First release: parser + entry + 7-day chart/list. Device testing found the entry layout bug fixed in v0.1.1.

@@ -13,8 +13,8 @@ android {
         applicationId = "app.bp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
     }
 
     buildTypes {
@@ -34,6 +34,13 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests {
+            // Needed for Compose UI tests under Robolectric.
+            isIncludeAndroidResources = true
+        }
     }
 }
 
@@ -55,4 +62,8 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.14")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
