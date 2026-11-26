@@ -156,7 +156,7 @@ src/main/kotlin/app/bp/
 
 - **Domain**: 7 calendar days (today + previous 6).
 - **X axis**: 7 bands, one label each ("Mon 24"). Readings within a day sorted by timestamp; **up to 3 bars per band** side by side (first reading = left = "morning", second = "night" — positional, not clock-based; a 3rd rare reading gets a 3rd thinner bar). Bar slot width adapts: 1 bar centered, 2 side-by-side, 3 slim.
-- **Y axis**: mmHg, scale = [min(40, dataMin−10) … max(160, dataMax+10)], horizontal gridlines every 20, labels at left. (HR 30–120 fits comfortably on the same axis — no second axis needed.)
+- **Y axis**: mmHg, scale = [min(50, dataMin−10) … max(150, dataMax+15)] — adapts to the data with a floor/ceiling so one odd reading can't squash the chart. Horizontal gridlines every 20, labels at left. (HR 30–120 fits comfortably on the same axis — no second axis needed.)
 - **BP bars**: vertical rounded segment from dia (bottom) to sys (top), ~16dp wide, rounded caps, primary color with the systolic cap slightly darker/emphasized.
 - **HR**: single thin (1.5dp) **dotted** polyline through the HR points (same x-centers as the bars), muted secondary color, tiny 3dp dots — clearly subordinate to the BP bars.
 - Empty band: just grid (the gap communicates missed days).

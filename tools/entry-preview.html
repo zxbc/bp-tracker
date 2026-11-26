@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>bp-tracker entry preview</title>
+<style>
+  :root {
+    --primary: #0F766E; --on-primary: #fff;
+    --primary-container: #99F6E4; --on-primary-container: #00201C;
+    --surface: #FAFDFB; --surface-variant: #DDE4E2;
+    --on-surface: #191C1B; --on-surface-variant: #41423F;
+    --error: #BA1A1A;
+  }
+  body { margin: 0; padding: 24px; background: #eef1f0; font-family: system-ui, sans-serif;
+         display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .frame { background: var(--surface); border-radius: 24px; padding: 20px; width: 360px;
+           box-shadow: 0 4px 18px rgba(0,0,0,.10); color: var(--on-surface); }
+  .frame h3 { margin: 0 0 2px; font-size: 14px; font-weight: 500; color: var(--on-surface-variant); }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .top .title { font-size: 20px; font-weight: 600; }
+  .cancel { color: var(--primary); font-size: 14px; font-weight: 600; }
+  .display { height: 150px; display: flex; flex-direction: column; justify-content: center;
+             align-items: center; gap: 4px; }
+  .digits { font-family: ui-monospace, monospace; font-size: 34px; letter-spacing: 4px; }
+  .digits .latest { background: var(--primary-container); color: var(--on-primary-container);
+                    border-radius: 10px; padding: 0 10px; margin-left: 6px; }
+  .parsed { display: flex; align-items: center; font-family: ui-monospace, monospace;
+            font-size: 52px; font-weight: 600; color: var(--primary); }
+  .parsed .slash { color: var(--on-surface-variant); margin: 0 8px; font-weight: 400; }
+  .bpm { font-family: ui-monospace, monospace; font-size: 20px; color: var(--on-surface-variant); }
+  .hint { font-size: 14px; color: var(--on-surface-variant); }
+  .hint.err { color: var(--error); }
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .key { background: var(--surface-variant); border-radius: 20px; height: 58px;
+         display: flex; align-items: center; justify-content: center;
+         font-size: 22px; font-weight: 500; }
+  .key.back { grid-column: span 1; }
+  .confirm { margin-top: 14px; }
+  .confirm .q { text-align: center; font-size: 14px; color: var(--on-surface-variant); margin-bottom: 8px; }
+  .cbar { display: flex; gap: 8px; align-items: center; }
+  .cbtn { font-size: 14px; font-weight: 600; color: var(--on-surface-variant); padding: 10px 14px; }
+  .ok { flex: 1; background: var(--primary); color: var(--on-primary); border-radius: 16px;
+        font-size: 15px; font-weight: 600; padding: 12px; display: flex; gap: 8px;
+        align-items: center; justify-content: center; }
+  .ok .tick { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.9);
+              display: flex; align-items: center; justify-content: center; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<!-- State: typing, not yet a full reading -->
+<div class="frame">
+  <h3>state: typing (9869…)</h3>
+  <div class="top"><span class="title">New reading</span><span class="cancel">Cancel</span></div>
+  <div class="display">
+    <div class="digits">9869<span class="latest">9</span></div>
+    <div class="hint">keep typing…</div>
+  </div>
+  <div class="numpad">
+    <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+    <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+    <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+    <div class="key">0</div><div class="key back">⌫</div><div class="key" style="visibility:hidden"></div>
+  </div>
+</div>
+
+<!-- State: parsed, confirm bar up -->
+<div class="frame">
+  <h3>state: parsed (1218171)</h3>
+  <div class="top"><span class="title">New reading</span><span class="cancel">Cancel</span></div>
+  <div class="display">
+    <div class="parsed">121<span class="slash">/</span>81</div>
+    <div class="bpm">71 bpm</div>
+  </div>
+  <div class="numpad">
+    <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+    <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+    <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+    <div class="key">0</div><div class="key back">⌫</div><div class="key" style="visibility:hidden"></div>
+  </div>
+  <div class="confirm">
+    <div class="q">Save this reading?</div>
+    <div class="cbar">
+      <span class="cbtn">Cancel</span><span class="cbtn">Edit</span>
+      <div class="ok"><span class="tick">✓</span>OK</div>
+    </div>
+  </div>
+</div>
+
+<!-- State: unresolved -->
+<div class="frame">
+  <h3>state: unresolved (118666)</h3>
+  <div class="top"><span class="title">New reading</span><span class="cancel">Cancel</span></div>
+  <div class="display">
+    <div class="digits">11866<span class="latest" style="background:#FFDAD6;color:#BA1A1A">6</span></div>
+    <div class="hint err">not a valid reading yet</div>
+  </div>
+  <div class="numpad">
+    <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+    <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+    <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+    <div class="key">0</div><div class="key back">⌫</div><div class="key" style="visibility:hidden"></div>
+  </div>
+</div>
+
+</body>
+</html>

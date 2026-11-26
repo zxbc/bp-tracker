@@ -72,7 +72,7 @@ fun BpChart(readings: List<Reading>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
-            .aspectRatio(1.3f),
+            .aspectRatio(1.4f),
     ) {
         drawChart(
             buckets = buckets,
@@ -115,8 +115,10 @@ private fun DrawScope.drawChart(
     val all = buckets.flatMap { it.readings }
     val dataMin = all.minOfOrNull { minOf(it.dia, it.hr) }?.toFloat() ?: 40f
     val dataMax = all.maxOfOrNull { maxOf(it.sys, it.hr) }?.toFloat() ?: 140f
-    val yMin = minOf(40f, dataMin - 10f)
-    val yMax = maxOf(160f, dataMax + 10f)
+    // Tight-ish dynamic bounds: the axis adapts to the data, but with a
+    // floor/ceiling so a single odd reading doesn't squash the whole chart.
+    val yMin = minOf(50f, dataMin - 10f)
+    val yMax = maxOf(150f, dataMax + 15f)
     fun y(v: Float): Float =
         plotBottom - (v - yMin) / (yMax - yMin) * (plotBottom - plotTop)
 
