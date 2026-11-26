@@ -14,9 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorUtils
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import app.bp.data.Reading
@@ -64,7 +64,14 @@ fun BpChart(readings: List<Reading>) {
     )
     val colors = MaterialTheme.colorScheme
     val today = remember { LocalDate.now() }
-    val capColor = remember(colors) { ColorUtils.blendARGB(colors.primary, Color.Black, 0.35f) }
+    // Systolic cap: the primary color darkened ~35%.
+    val capColor = remember(colors) {
+        colors.primary.copy(
+            red = colors.primary.red * 0.65f,
+            green = colors.primary.green * 0.65f,
+            blue = colors.primary.blue * 0.65f,
+        )
+    }
     val hrColor = colors.onSurface.copy(alpha = 0.35f)
     val hrDotColor = colors.onSurface.copy(alpha = 0.55f)
 
@@ -190,7 +197,7 @@ private fun DrawScope.drawChart(
                 cap = StrokeCap.Round,
             )
             if (p > 0.999f) {
-                drawCircle(capColor, Offset(x, ySys), barWidth * 0.62f)
+                drawCircle(capColor, barWidth * 0.62f, Offset(x, ySys))
             }
             hrPoints.add(Offset(x, y(r.hr.toFloat())))
         }
@@ -199,7 +206,7 @@ private fun DrawScope.drawChart(
     // Heart rate: thin dotted line, clearly subordinate to the BP bars.
     if (progress > 0.35f) {
         drawDottedLine(hrColor, hrPoints, dotRadius = 1.3f * density, step = 5f * density)
-        hrPoints.forEach { drawCircle(hrDotColor, it, 2.3f * density) }
+        hrPoints.forEach { drawCircle(hrDotColor, 2.3f * density, it) }
     }
 }
 
@@ -221,8 +228,8 @@ private fun DrawScope.drawDottedLine(
             val t = d / dist
             drawCircle(
                 color,
-                Offset(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t),
                 dotRadius,
+                Offset(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t),
             )
             d += step
         }

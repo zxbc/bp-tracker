@@ -30,6 +30,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +52,7 @@ fun ReviewScreen(
 ) {
     var tab by rememberSaveable { mutableStateOf(ReviewTab.Chart) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val colors = MaterialTheme.colorScheme
 
     Scaffold(
@@ -83,14 +86,14 @@ fun ReviewScreen(
                 SegmentedButton(
                     selected = tab == ReviewTab.Chart,
                     onClick = { tab = ReviewTab.Chart },
-                    shape = SegmentedButtonDefaults.shape(index = 0, count = 2),
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                 ) {
                     Text("Chart")
                 }
                 SegmentedButton(
                     selected = tab == ReviewTab.List,
                     onClick = { tab = ReviewTab.List },
-                    shape = SegmentedButtonDefaults.shape(index = 1, count = 2),
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 ) {
                     Text("List")
                 }
@@ -105,11 +108,13 @@ fun ReviewScreen(
                     readings = allReadings,
                     onDelete = { r ->
                         onDelete(r)
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Reading deleted",
-                            actionLabel = "Undo",
-                        )
-                        if (result == SnackbarResult.ActionPerformed) onRestore(r)
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = "Reading deleted",
+                                actionLabel = "Undo",
+                            )
+                            if (result == SnackbarResult.ActionPerformed) onRestore(r)
+                        }
                     },
                 )
             }

@@ -2,14 +2,15 @@ package app.bp.ui.entry
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Interaction
-import androidx.compose.animation.core.MutableInteractionSource
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,26 +26,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardBackspace
+import androidx.compose.material.icons.automirrored.filled.KeyboardBackspace
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.clickable
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import app.bp.domain.BpParser.ParseResult
@@ -251,37 +247,45 @@ private fun DigitRow(digits: String, color: Color, font: FontFamily) {
 /** The numpad: 1–9, 0 and a wide backspace. Every key haptics + press animation. */
 @Composable
 private fun Numpad(onDigit: (Char) -> Unit, onBackspace: () -> Unit) {
-    val haptics = LocalHapticFeedback.current
+    val view = LocalView.current
     val onKey: (Char) -> Unit = { d ->
-        haptics.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         onDigit(d)
     }
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        listOf('1', '2', '3').forEach { row ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            ) {
-                row.forEach { d ->
-                    NumpadKey(d.toString(), Modifier.weight(1f).fillMaxHeight(), onKey(d))
-                }
-            }
+        // Row 1: 1 2 3
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f).fillMaxWidth()) {
+            NumpadKey("1", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('1') })
+            NumpadKey("2", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('2') })
+            NumpadKey("3", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('3') })
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-        ) {
-            NumpadKey("0", Modifier.weight(1f).fillMaxHeight(), onKey('0'))
+        // Row 2: 4 5 6
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f).fillMaxWidth()) {
+            NumpadKey("4", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('4') })
+            NumpadKey("5", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('5') })
+            NumpadKey("6", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('6') })
+        }
+        // Row 3: 7 8 9
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f).fillMaxWidth()) {
+            NumpadKey("7", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('7') })
+            NumpadKey("8", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('8') })
+            NumpadKey("9", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('9') })
+        }
+        // Row 4: 0 backspace [gap]
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f).fillMaxWidth()) {
+            NumpadKey("0", Modifier.weight(1f).fillMaxHeight(), onClick = { onKey('0') })
             NumpadKey(
-                "",
-                Modifier.weight(1f).fillMaxHeight(),
-            ) {
-                haptics.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                onBackspace()
-            }
+                label = "",
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                onClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    onBackspace()
+                },
+            )
+            Spacer(Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
@@ -295,19 +299,9 @@ private fun NumpadKey(
     label: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    content: @Composable (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    var pressed by remember { mutableStateOf(false) }
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { i ->
-            pressed = when (i) {
-                is Interaction.Press -> true
-                is Interaction.Release, is Interaction.Cancel -> false
-                else -> pressed
-            }
-        }
-    }
+    val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.93f else 1f,
         animationSpec = spring(dampingRatio = 0.55f, stiffness = 900f),
@@ -326,13 +320,11 @@ private fun NumpadKey(
             .scale(scale),
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (content != null) {
-                content()
-            } else if (label.isNotEmpty()) {
+            if (label.isNotEmpty()) {
                 Text(label, style = MaterialTheme.typography.headlineSmall, color = colors.onSurface)
             } else {
                 Icon(
-                    Icons.Filled.KeyboardBackspace,
+                    Icons.AutoMirrored.Filled.KeyboardBackspace,
                     contentDescription = "Backspace",
                     tint = colors.onSurface,
                 )

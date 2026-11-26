@@ -2,12 +2,12 @@ package app.bp.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
-import org.junit.fail
 
 class BpParserTest {
 
-    private val parsed = BpParser.ParseResult.Parsed
+    private fun parsed(sys: Int, dia: Int, hr: Int) = BpParser.ParseResult.Parsed(sys, dia, hr)
 
     // ------------------------------------------------- required behaviors
 

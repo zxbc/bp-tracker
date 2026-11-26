@@ -7,11 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import app.bp.data.AppDatabase
 import app.bp.data.ReadingRepository
 import app.bp.ui.BpViewModel
@@ -28,15 +25,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val activity = this
-        val vm: BpViewModel = viewModel {
-            viewModelFactory {
-                initializer {
-                    BpViewModel(ReadingRepository(AppDatabase.get(activity).readingDao()))
-                }
-            }
-        }
         setContent {
             BpTrackerTheme {
+                val vm: BpViewModel = viewModel {
+                    BpViewModel(ReadingRepository(AppDatabase.get(activity).readingDao()))
+                }
                 BpApp(vm)
             }
         }

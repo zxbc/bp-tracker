@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,12 +35,14 @@ import java.time.format.DateTimeFormatter
 private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val dayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE d MMM")
 
-private val numberStyle get() = MaterialTheme.typography.bodyLarge.copy(
-    fontFamily = FontFamily.Monospace,
-    fontFeatureSettings = "tnum",
-)
+private val numberStyle: TextStyle @Composable get() =
+    MaterialTheme.typography.bodyLarge.copy(
+        fontFamily = FontFamily.Monospace,
+        fontFeatureSettings = "tnum",
+    )
 
-private val labelStyle get() = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
+private val labelStyle: TextStyle @Composable get() =
+    MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
 
 /**
  * Spreadsheet-like view of all readings: a column header, one band per day
