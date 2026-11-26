@@ -13,8 +13,8 @@ android {
         applicationId = "app.bp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.1.2"
+        versionCode = 4
+        versionName = "0.1.3"
     }
 
     buildTypes {
@@ -42,6 +42,22 @@ android {
             isIncludeAndroidResources = true
         }
     }
+}
+
+// Release artifact carries the version in its file name:
+// bp-tracker-v<versionName>-<buildType>.apk (housekeeping: the raw
+// Gradle output is a nameless app-debug.apk).
+tasks.register<Copy>("copyVersionedApk") {
+    from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+    // Its own directory: AGP's listing-file task declares the apk/debug
+    // directory as its input, so writing alongside app-debug.apk would trip
+    // task-output validation.
+    into(layout.buildDirectory.dir("outputs/apk/versioned"))
+    rename { "bp-tracker-v${android.defaultConfig.versionName}-debug.apk" }
+}
+// AGP registers the variant tasks in afterEvaluate, so wire lazily.
+tasks.matching { it.name == "assembleDebug" }.configureEach {
+    finalizedBy("copyVersionedApk")
 }
 
 dependencies {

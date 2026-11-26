@@ -106,24 +106,27 @@ fun ReviewScreen(
             when (tab) {
                 ReviewTab.Chart -> {
                     if (chartReadings.isEmpty()) EmptyState(onNewEntry)
-                    else ContentCard(Modifier.weight(1f)) {
+                    else ContentCard() {
                         BpChart(readings = chartReadings)
                     }
                 }
-                ReviewTab.List -> ContentCard(Modifier.weight(1f)) {
-                    ReadingList(
-                        readings = allReadings,
-                        onDelete = { r ->
-                            onDelete(r)
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Reading deleted",
-                                    actionLabel = "Undo",
-                                )
-                                if (result == SnackbarResult.ActionPerformed) onRestore(r)
-                            }
-                        },
-                    )
+                ReviewTab.List -> {
+                    if (allReadings.isEmpty()) EmptyState(onNewEntry)
+                    else ContentCard(Modifier.weight(1f, fill = false)) {
+                        ReadingList(
+                            readings = allReadings,
+                            onDelete = { r ->
+                                onDelete(r)
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Reading deleted",
+                                        actionLabel = "Undo",
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) onRestore(r)
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -134,6 +137,11 @@ fun ReviewScreen(
  * The delineated background for chart and list: a raised, bordered card so
  * the content reads as a self-contained surface even when there are only a
  * few entries.
+ *
+ * The card wraps its content — no `fillMaxSize` inside — so with few entries
+ * the border hugs the content instead of extending down the page (v0.1.3
+ * device report). Callers that must cap the height pass
+ * `weight(1f, fill = false)`.
  */
 @Composable
 private fun ContentCard(
@@ -146,7 +154,7 @@ private fun ContentCard(
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) { content() }
+        Box(modifier = Modifier.padding(12.dp)) { content() }
     }
 }
 

@@ -1,6 +1,6 @@
 # bp-tracker — Implementation Plan
 
-Status: implemented (v0.1.1 released). This document is the source of truth for the first implementation pass; §11 is the changelog.
+Status: implemented (v0.1.3 released). This document is the source of truth for the first implementation pass; §11 is the changelog.
 
 ## 1. Goals
 
@@ -131,7 +131,7 @@ src/main/kotlin/app/bp/
     entry/EntryScreen.kt   // display, numpad, confirm bar
     review/ReviewScreen.kt // tabs: Chart | List, header, "＋ New entry"
     review/BpChart.kt      // pure Canvas drawing, no state of its own
-    review/ReadingList.kt  // LazyColumn spreadsheet
+    review/ReadingList.kt  // scrollable spreadsheet Column
 ```
 
 ### Entry screen details
@@ -147,7 +147,7 @@ src/main/kotlin/app/bp/
 - Header: "Blood pressure" + date range subtitle (last 7 days) + "＋ New entry".
 - Toggle: M3 `SingleChoiceSegmentedButtonRow` — Chart (default) / List.
 - **Chart** (`BpChart`): see §7.
-- **List** (`ReadingList`): spreadsheet look — sticky column header row (Date/Time · SYS · DIA · HR), rows in a `LazyColumn`, numbers in `fontFeatureSettings = "tnum"`, right-aligned; day group headers ("Mon 24 Nov"); newest first; swipe-right to delete with an undo Snackbar; empty state with CTA to add a reading.
+- **List** (`ReadingList`): spreadsheet look — column header row (Date/Time · SYS · DIA · HR), rows in a scrollable `Column` (wraps its content so the card hugs a short list; scrolls once the card's height cap is reached), numbers in `fontFeatureSettings = "tnum"`, right-aligned; day group headers ("Mon 24 Nov"); newest first; per-row delete with an undo Snackbar; empty state (shared `EmptyState`) with CTA to add a reading.
 
 ### Responsiveness / prettiness budget
 
@@ -193,6 +193,20 @@ Phase 2 candidates (not in v1): CSV export, explicit morning/night labels, targe
 - UI: manual on a real device per release (v0.1.0 device testing is what caught the §11 layout bug; Robolectric tests now guard the regression).
 
 ## 11. Changelog
+
+### v0.1.3 (2026-11-26)
+
+Device feedback after v0.1.2 — three fixes plus one housekeeping change:
+
+- **Chart card no longer fills the page.** The v0.1.2 `ContentCard` had a `fillMaxSize()` inner `Box`, so the card's border and fill stretched down the whole page while the chart occupied only the top half (the "border fills the entire phone page" device report). The card now wraps its content (inner `Box` with padding only). List tab: `ReadingList` is a scrollable `Column` instead of `LazyColumn(fillMaxSize)` inside `ContentCard(Modifier.weight(1f, fill = false))` — short lists hug the card, long lists scroll within a height-capped card. A plain column is fine at personal-log scale.
+- **Legible Y-axis labels.** The chart drew its y-axis numbers with the gridline paint — `onSurface` at 10% alpha — barely visible in *both* themes (reported in dark; the light theme was equally broken, and the preview HTML masked it with a 60%-alpha stand-in). The labels now use a dedicated `yLabelPaint` with `onSurfaceVariant`; gridlines stay at 10% deliberately.
+- **Dark-theme text-color audit.** Every text color on entry + review screens vetted: everything else already used proper theme roles (`onSurface` / `onSurfaceVariant` / `primary` / M3 component defaults) — the chart y-labels were the only genuinely broken text color. Verified by pixel, not by declaration: `DarkModeTest` grew from 3 to 6 tests — entry error text (TooLong state), chart y- and x-axis label strips (max luminance > 0.45), list header / day header / row time, plus a card-wrap pixel assertion (the pixel below the card is the screen background `0xFF111413`, not the card fill). Negative control: reverting the label paint to the gridline color makes the chart test fail — the guard discriminates.
+- **Versioned APK name.** The raw Gradle artifact is the nameless `app-debug.apk`; a `copyVersionedApk` task now copies it to `outputs/apk/versioned/bp-tracker-v<versionName>-debug.apk` and runs after every `assembleDebug`.
+  - **Gotcha 1:** AGP registers the variant tasks in `afterEvaluate`, so an eager `tasks.named("assembleDebug")` fails ("Task with name 'assembleDebug' not found") — wire it with `tasks.matching { it.name == "assembleDebug" }.configureEach { finalizedBy("copyVersionedApk") }`.
+  - **Gotcha 2:** `layout.buildDirectory.file("apk/debug/…")` resolves to `build/apk/debug/` — the APK actually lives in `build/outputs/apk/debug/`. A `Copy` with a missing source silently goes `NO-SOURCE`.
+  - **Gotcha 3:** writing the copy into `apk/debug/` alongside `app-debug.apk` trips task-output validation (AGP's `createDebugApkListingFileRedirect` declares that directory as its input) — the copy goes to its own `apk/versioned/` directory.
+- `tools/chart-preview.html` updated to the faithful v0.1.3 palette (real `onSurfaceVariant` label colors, gridlines at 10%).
+- Version 0.1.2 → 0.1.3 (versionCode 4).
 
 ### v0.1.2 (2026-11-26)
 

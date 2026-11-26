@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.bp.data.Reading
 import java.time.Instant
@@ -79,7 +80,8 @@ fun BpChart(readings: List<Reading>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
-            .aspectRatio(1.4f),
+            .aspectRatio(1.4f)
+            .testTag("bp-chart"),
     ) {
         drawChart(
             buckets = buckets,
@@ -129,10 +131,13 @@ private fun DrawScope.drawChart(
     fun y(v: Float): Float =
         plotBottom - (v - yMin) / (yMax - yMin) * (plotBottom - plotTop)
 
-    // Horizontal gridlines every 20 mmHg with labels.
-    val gridPaint = android.graphics.Paint().apply {
+    // Horizontal gridlines every 20 mmHg, with labels on the left.
+    // The lines stay deliberately subtle; the labels are text and must use a
+    // real text color — v0.1.2 drew them at the gridline's 10% alpha, which
+    // was unreadable (reported on device, dark theme).
+    val yLabelPaint = android.graphics.Paint().apply {
         isAntiAlias = true
-        color = gridColor.toArgb()
+        color = labelColor.toArgb()
         textSize = 11f * density
         textAlign = android.graphics.Paint.Align.RIGHT
     }
@@ -144,7 +149,7 @@ private fun DrawScope.drawChart(
             grid.toInt().toString(),
             plotLeft - 6f * density,
             gy + 4f * density,
-            gridPaint,
+            yLabelPaint,
         )
         grid += 20f
     }

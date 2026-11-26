@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>bp-tracker chart preview — v0.1.2 (delineated card, light + dark)</title>
+<title>bp-tracker chart preview — v0.1.3 (delineated card, legible labels, light + dark)</title>
 <style>
   body { margin: 0; padding: 24px; background: #eef1f0; font-family: system-ui, sans-serif; }
   h2 { color: #191c1b; font-size: 18px; margin: 0 0 4px; }
@@ -21,8 +21,10 @@
 </head>
 <body>
 <h2>Chart preview — mirrors app.bp.ui.review.BpChart</h2>
-<div class="sub">Same geometry, scale rules and colors as the Compose Canvas code, now inside the v0.1.2
-delineated card (surfaceContainerLow + outlineVariant border) — light and dark (night) side by side.</div>
+<div class="sub">Same geometry, scale rules and colors as the Compose Canvas code, inside the v0.1.3
+delineated card (surfaceContainerLow + outlineVariant border, wrapping the chart — no border running
+down an empty page). Axis labels now use onSurfaceVariant (v0.1.2 drew them at the gridline's 10%
+alpha) — light and dark (night) side by side.</div>
 <div class="row">
   <div class="cell">
     <p class="cap">light <small>— TealLight fallback</small></p>
@@ -54,7 +56,10 @@ const readings = [
 ];
 
 // ---- palettes: Theme.kt TealLight / TealDark + BpChart.kt derivations ----
-// cap = primary * 0.65 per channel; hr = onSurface @ 0.35; grid = onSurface @ 0.10
+// cap = primary * 0.65 per channel; hr = onSurface @ 0.35; grid = onSurface @ 0.10.
+// Axis labels use the scheme's onSurfaceVariant (M3 baseline neutrals for the
+// unspecified roles: light #444946, dark #C4C7C7) — since v0.1.3, same as the
+// app. Gridlines stay at 10% on purpose.
 function makePalette(primary, onSurface, onSurfaceVariant, bg) {
   const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const p = hex(primary);
@@ -63,15 +68,15 @@ function makePalette(primary, onSurface, onSurfaceVariant, bg) {
   return {
     primary, cap,
     onSurfaceVariant,
+    axisLabel: onSurfaceVariant,
     grid: `rgba(${o},${0.10})`,
-    gridLabel: `rgba(${o},${0.60})`,
     hrLine: `rgba(${o},${0.35})`,
     hrDot: `rgba(${o},${0.55})`,
     bg,
   };
 }
 const C = {
-  light: makePalette("#0F766E", "25,28,27", "#41423F", "#f2f4ef"),
+  light: makePalette("#0F766E", "25,28,27", "#444946", "#f2f4ef"),
   dark:  makePalette("#5FD4C8", "225,227,226", "#C4C7C7", "#1a1d1b"),
 };
 
@@ -107,7 +112,7 @@ function renderChart(P) {
   while (grid <= yMax) {
     const gy = y(grid);
     svg += `<line x1="${plotLeft}" y1="${gy}" x2="${plotRight}" y2="${gy}" stroke="${P.grid}" stroke-width="1"/>`;
-    svg += `<text x="${plotLeft - 6}" y="${gy + 4}" font-size="11" fill="${P.gridLabel}" text-anchor="end" font-family="monospace">${grid}</text>`;
+    svg += `<text x="${plotLeft - 6}" y="${gy + 4}" font-size="11" fill="${P.axisLabel}" text-anchor="end" font-family="monospace">${grid}</text>`;
     grid += 20;
   }
 
