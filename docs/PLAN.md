@@ -194,6 +194,19 @@ Phase 2 candidates (not in v1): CSV export, explicit morning/night labels, targe
 
 ## 11. Changelog
 
+### v0.1.2 (2026-11-26)
+
+Device feedback after v0.1.1 — three fixes:
+
+- **Dark theme (the big one).** The app ignored night mode entirely; text that is black-on-light in the day theme stayed black on the dark window and was barely visible.
+  - Platform side: `Theme.BpTracker` is now a DayNight pair — `values/themes.xml` → `Theme.Material.Light.NoActionBar`, new `values-night/themes.xml` → `Theme.Material.NoActionBar` (window chrome + the brief pre-Compose moment).
+  - Compose side, root cause: M3's `MaterialTheme` does **not** provide `LocalContentColor` (its default is `Color.Black`); only `Surface`/`Scaffold` do. The review screen was fine because its root is a `Scaffold`; the entry screen's root was a bare `Column`, so its plain `Text`s (the "New reading" title) rendered pure black in dark mode. Fix: entry root is now an M3 `Surface(color = background, contentColor = onSurface)` — the same pattern `Scaffold` uses.
+  - Verified by pixel, not by declaration: new `DarkModeTest` (3 tests) runs Robolectric with the `night` qualifier (`w412dp-h915dp-night-420dpi` — note the strict qualifier ordering: `night` must precede the density), forces `dynamicColor = false` for the deterministic TealDark palette, captures the real window via `PixelCopy.request`, and asserts: dark background, light title, dark-teal digit chip.
+  - **Gotcha:** Compose's `captureToImage()` does not work under Robolectric — `forceRedraw` posts a runnable to the paused main looper and waits on the Compose test clock only, so it always times out (`ComposeTimeoutException` after 2000 ms). The working path: `createAndroidComposeRule(ComponentActivity::class.java)` (exposes `.activity`), idle the main looper, then `PixelCopy.request(window, null, bitmap, listener, Handler(mainLooper))` — Robolectric's `ShadowPixelCopy` renders the window and delivers the listener. Node→pixel mapping via `SemanticsNode.boundsInWindow`.
+- **Numpad clearance.** The bottom key row sat at the very bottom edge, in the zone where the auto-hide gesture-nav bar reveals itself. The 16 dp spacer is now a non-interactive `EntryFooter` strip (testTag `entry-footer`) carrying the format hint `e.g. 1218171 → 121 / 81 / 71`, which was previously in the empty display (where it only lived until the first digit). The keys are lifted off the bottom edge; the strip is informational, never competes for touch.
+- **Delineated chart/list.** With few entries the chart and list floated on the bare background and looked unfinished. Both now render inside a `ContentCard`: M3 `Surface` with `surfaceContainerLow` fill, 1 dp `outlineVariant` border, 20 dp radius, 12 dp inner padding (M3 1.3.1 `Surface` has no `contentPadding` parameter — the inner `Box` applies it). List row backgrounds adjusted to sit inside the card (`surfaceContainer` day headers, transparent rows).
+- Version 0.1.1 → 0.1.2 (versionCode 3).
+
 ### v0.1.1 (2026-11-26)
 
 - **Entry screen redesign — fix for the v0.1.0 device bug.** v0.1.0 shipped with numpad rows using `Modifier.weight(1f)` and no fixed key height: the pad greedily filled the entire screen, the live display was squeezed to zero height (typed digits invisible), the confirm bar was pushed off-screen (OK never appeared), and the quarter-screen keys made one-handed typing hard. The redesign:

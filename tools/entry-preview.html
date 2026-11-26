@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>bp-tracker entry — v0.1.1 layout</title>
+<title>bp-tracker entry — v0.1.2 layout (footer + dark theme)</title>
 <style>
   :root {
     --surface: #FAFDFB;
@@ -20,7 +20,10 @@
   body { margin: 0; background: #eef1f0; font-family: system-ui, sans-serif; }
   .wrap { display: flex; gap: 24px; padding: 24px; align-items: flex-start; }
   .cell { flex: 0 0 auto; }
-  .cap { font-size: 13px; color: #374151; margin: 0 0 8px; font-weight: 600; }
+  /* Cap the caption width to the phone cell: an unwrapped <p> would make the
+     flex cell's max-content width the caption's one-line width, pushing the
+     fourth phone off the canvas. */
+  .cap { font-size: 13px; color: #374151; margin: 0 0 8px; font-weight: 600; max-width: 306px; }
   .cap small { font-weight: 400; color: #6b7280; }
 
   .phone {
@@ -30,11 +33,27 @@
     transform: scale(0.72); transform-origin: top left;
   }
   .phone-cell { width: 306px; height: 666px; }
+  /* Dark (night) variant: TealDark fallback palette (Theme.kt) + M3 baseline
+     dark neutrals for the unspecified surface-variant roles. */
+  .phone.dark {
+    --surface: #111413;
+    --surface-variant: #444946;
+    --on-surface: #E1E3E2;
+    --on-surface-variant: #C4C7C7;
+    --primary: #5FD4C8;
+    --primary-container: #00514A;
+    --on-primary-container: #99F6E4;
+    --tonal: #334B47;
+    --on-tonal: #CCE8E2;
+    --error: #FFB4AB;
+    background: var(--surface);
+    border-color: #2a2d2c;
+  }
 
   .statusbar { height: 24px; display: flex; align-items: center; justify-content: space-between;
     padding: 0 20px; font-size: 12px; color: var(--on-surface); }
 
-  .screen { flex: 1; display: flex; flex-direction: column; padding: 0 20px 16px; }
+  .screen { flex: 1; display: flex; flex-direction: column; padding: 0 20px; }
 
   .toprow { display: flex; align-items: center; height: 40px; }
   .title { font-size: 22px; font-weight: 600; color: var(--on-surface); }
@@ -49,7 +68,6 @@
   .display { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
   .hint { font-size: 16px; color: var(--on-surface-variant); }
-  .hint-sub { font-size: 12px; color: var(--on-surface-variant); opacity: 0.7; margin-top: 6px; }
 
   .stream { display: flex; align-items: center; gap: 6px; font-family: var(--mono); }
   .stream .digits { font-size: 45px; color: var(--on-surface); letter-spacing: 1px; }
@@ -91,13 +109,20 @@
   }
   .key svg { width: 24px; height: 24px; }
   .key.gap { background: transparent; }
+
+  /* v0.1.2: non-interactive strip below the last key row — lifts the keys
+     off the bottom edge (gesture-nav zone) and carries the format hint. */
+  .footer {
+    text-align: center; font-size: 12px; color: var(--on-surface-variant);
+    opacity: 0.8; padding: 12px 0 16px;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="cell">
-    <p class="cap">1 · fresh open <small>— hint, compact numpad at the bottom, Cancel visible (disabled)</small></p>
+    <p class="cap">1 · fresh open <small>— hint, numpad lifted above the bottom edge, Cancel visible (disabled)</small></p>
     <div class="phone-cell">
     <div class="phone">
       <div class="statusbar"><span>10:24</span><span>●●●</span></div>
@@ -109,7 +134,6 @@
         </div>
         <div class="display">
           <div class="hint">Type your reading</div>
-          <div class="hint-sub">e.g. 1218171 → 121 / 81 / 71</div>
         </div>
         <div class="numpad">
           <div class="nrow"><div class="key">1</div><div class="key">2</div><div class="key">3</div></div>
@@ -120,6 +144,7 @@
             <div class="key gap"></div>
           </div>
         </div>
+        <div class="footer">e.g. 1218171 → 121 / 81 / 71</div>
       </div>
     </div>
     </div>
@@ -149,6 +174,7 @@
             <div class="key gap"></div>
           </div>
         </div>
+        <div class="footer">e.g. 1218171 → 121 / 81 / 71</div>
       </div>
     </div>
     </div>
@@ -189,6 +215,48 @@
             <div class="key gap"></div>
           </div>
         </div>
+        <div class="footer">e.g. 1218171 → 121 / 81 / 71</div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="cell">
+    <p class="cap">4 · dark theme, parsed <small>— night mode: dark surface, light text, dark-teal digit chip</small></p>
+    <div class="phone-cell">
+    <div class="phone dark">
+      <div class="statusbar"><span>10:24</span><span>●●●</span></div>
+      <div class="screen">
+        <div class="toprow">
+          <span class="title">New reading</span>
+          <div class="spacer"></div>
+          <button class="btn-tonal">Cancel</button>
+        </div>
+        <div class="display">
+          <div class="groups">
+            <div class="group"><span class="val">121</span><span class="lbl">SYS</span></div>
+            <div class="group"><span class="val">81</span><span class="lbl">DIA</span></div>
+            <div class="group"><span class="val hr">71</span><span class="lbl">HR</span></div>
+          </div>
+        </div>
+        <div class="confirm">
+          <span class="q">Save this reading?</span>
+          <div class="row">
+            <button class="btn-text">Cancel</button>
+            <button class="btn-text">Edit</button>
+            <button class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12.5l5 5L20 6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>OK</button>
+          </div>
+        </div>
+        <div class="numpad">
+          <div class="nrow"><div class="key">1</div><div class="key">2</div><div class="key">3</div></div>
+          <div class="nrow"><div class="key">4</div><div class="key">5</div><div class="key">6</div></div>
+          <div class="nrow"><div class="key">7</div><div class="key">8</div><div class="key">9</div></div>
+          <div class="nrow"><div class="key">0</div>
+            <div class="key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5h12v14H8l-6-7z" stroke-linejoin="round"/><path d="M12 9l6 6M18 9l-6 6" stroke-linecap="round"/></svg></div>
+            <div class="key gap"></div>
+          </div>
+        </div>
+        <div class="footer">e.g. 1218171 → 121 / 81 / 71</div>
       </div>
     </div>
     </div>

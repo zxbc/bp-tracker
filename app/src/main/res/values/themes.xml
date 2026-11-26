@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.BpTracker" parent="android:Theme.Material.NoActionBar" />
+    <!-- DayNight pair: values-night/themes.xml carries the dark half. The
+         platform theme only provides the window chrome (background, status
+         bar) for the brief moment before Compose draws; Compose's own
+         color scheme does the real theming and must match this pair. -->
+    <style name="Theme.BpTracker" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

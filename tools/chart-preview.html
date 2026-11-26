@@ -2,18 +2,37 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>bp-tracker chart preview</title>
+<title>bp-tracker chart preview — v0.1.2 (delineated card, light + dark)</title>
 <style>
-  body { margin: 0; padding: 24px; background: #fafdfb; font-family: system-ui, sans-serif; }
+  body { margin: 0; padding: 24px; background: #eef1f0; font-family: system-ui, sans-serif; }
   h2 { color: #191c1b; font-size: 18px; margin: 0 0 4px; }
-  .sub { color: #41423f; font-size: 13px; margin-bottom: 16px; }
-  svg { background: #fafdfb; border-radius: 12px; }
+  .sub { color: #4b5563; font-size: 13px; margin-bottom: 16px; }
+  .row { display: flex; gap: 24px; }
+  .cell { flex: 0 0 auto; }
+  .cap { font-size: 13px; color: #374151; margin: 0 0 8px; font-weight: 600; }
+  .cap small { font-weight: 400; color: #6b7280; }
+
+  /* The card mirrors ReviewScreen.ContentCard: surfaceContainerLow fill,
+     1dp outlineVariant border, 20dp radius, 12dp inner padding. */
+  .card { border-radius: 20px; border: 1px solid #c9ccc6; background: #f2f4ef; padding: 12px; }
+  .card.dark { border-color: #434740; background: #1a1d1b; }
+  .card svg { display: block; border-radius: 12px; }
 </style>
 </head>
 <body>
 <h2>Chart preview — mirrors app.bp.ui.review.BpChart</h2>
-<div class="sub">Same geometry, scale rules and colors as the Compose Canvas code (M3 light teal palette).</div>
-<div id="chart"></div>
+<div class="sub">Same geometry, scale rules and colors as the Compose Canvas code, now inside the v0.1.2
+delineated card (surfaceContainerLow + outlineVariant border) — light and dark (night) side by side.</div>
+<div class="row">
+  <div class="cell">
+    <p class="cap">light <small>— TealLight fallback</small></p>
+    <div class="card"><div id="chart-light"></div></div>
+  </div>
+  <div class="cell">
+    <p class="cap">dark <small>— TealDark fallback (night mode)</small></p>
+    <div class="card dark"><div id="chart-dark"></div></div>
+  </div>
+</div>
 <script>
 // ---- sample data: 7 days, 2 measurements per day (morning + night) ----
 const now = new Date();
@@ -34,16 +53,26 @@ const readings = [
   [daysAgo(0, 7), 117, 75, 63],
 ];
 
-// ---- palette: M3 light, fixed teal fallback (Theme.kt) ----
+// ---- palettes: Theme.kt TealLight / TealDark + BpChart.kt derivations ----
+// cap = primary * 0.65 per channel; hr = onSurface @ 0.35; grid = onSurface @ 0.10
+function makePalette(primary, onSurface, onSurfaceVariant, bg) {
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const p = hex(primary);
+  const cap = "#" + p.map(v => Math.round(v * 0.65).toString(16).padStart(2, "0")).join("");
+  const o = hex(onSurface);
+  return {
+    primary, cap,
+    onSurfaceVariant,
+    grid: `rgba(${o},${0.10})`,
+    gridLabel: `rgba(${o},${0.60})`,
+    hrLine: `rgba(${o},${0.35})`,
+    hrDot: `rgba(${o},${0.55})`,
+    bg,
+  };
+}
 const C = {
-  primary: "#0F766E",
-  cap: "#0A4C47",                       // blend(primary, black, 0.35)
-  onSurface: "#191C1B",
-  onSurfaceVariant: "#41423F",
-  grid: "rgba(25,28,27,0.10)",
-  hrLine: "rgba(25,28,27,0.35)",
-  hrDot: "rgba(25,28,27,0.55)",
-  bg: "#FAFDFB",
+  light: makePalette("#0F766E", "25,28,27", "#41423F", "#f2f4ef"),
+  dark:  makePalette("#5FD4C8", "225,227,226", "#C4C7C7", "#1a1d1b"),
 };
 
 // ---- geometry: mirrors BpChart.drawChart ----
@@ -69,56 +98,60 @@ for (const [ts] of readings) {
 const buckets = [...byDay.values()].sort((a, b) => a.date - b.date);
 const bandW = (plotRight - plotLeft) / 7;
 
-let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
-svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${C.bg}" rx="12"/>`;
+function renderChart(P) {
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="${P.bg}" rx="12"/>`;
 
-// gridlines + y labels
-let grid = Math.ceil(yMin / 20) * 20;
-while (grid <= yMax) {
-  const gy = y(grid);
-  svg += `<line x1="${plotLeft}" y1="${gy}" x2="${plotRight}" y2="${gy}" stroke="${C.grid}" stroke-width="1"/>`;
-  svg += `<text x="${plotLeft - 6}" y="${gy + 4}" font-size="11" fill="${C.grid.replace("0.10", "0.60")}" text-anchor="end" font-family="monospace">${grid}</text>`;
-  grid += 20;
-}
-
-// x labels + bars + hr points
-const hrPoints = [];
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-buckets.forEach((bucket, i) => {
-  const bandLeft = plotLeft + bandW * i;
-  const cx = bandLeft + bandW / 2;
-  const isToday = bucket.key === `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-  const lc = isToday ? C.primary : C.onSurfaceVariant;
-  svg += `<text x="${cx}" y="${H - 22}" font-size="11" fill="${lc}" text-anchor="middle">${WEEKDAYS[bucket.date.getDay()]}</text>`;
-  svg += `<text x="${cx}" y="${H - 8}" font-size="11" fill="${lc}" text-anchor="middle">${bucket.date.getDate()}</text>`;
-  if (bucket.list.length === 0) return;
-  const dayReadings = readings.filter(r => bucket.list.includes(r[0]));
-  const n = dayReadings.length;
-  const slot = bandW / n;
-  const barWidth = Math.min(14, slot * 0.34);
-  dayReadings.forEach((r, j) => {
-    const x = bandLeft + slot * (j + 0.5);
-    const ySys = y(r[1]), yDia = y(r[2]);
-    svg += `<line x1="${x}" y1="${ySys}" x2="${x}" y2="${yDia}" stroke="${C.primary}" stroke-width="${barWidth}" stroke-linecap="round"/>`;
-    svg += `<circle cx="${x}" cy="${ySys}" r="${barWidth * 0.62}" fill="${C.cap}"/>`;
-    hrPoints.push([x, y(r[3])]);
-  });
-});
-
-// hr dotted line (dots every 5px, r=1.3) + value dots (r=2.3)
-for (let k = 0; k < hrPoints.length - 1; k++) {
-  const [ax, ay] = hrPoints[k], [bx, by] = hrPoints[k + 1];
-  const dist = Math.hypot(bx - ax, by - ay);
-  for (let d = 0; d < dist; d += 5) {
-    const t = d / dist;
-    svg += `<circle cx="${ax + (bx - ax) * t}" cy="${ay + (by - ay) * t}" r="1.3" fill="${C.hrLine}"/>`;
+  // gridlines + y labels
+  let grid = Math.ceil(yMin / 20) * 20;
+  while (grid <= yMax) {
+    const gy = y(grid);
+    svg += `<line x1="${plotLeft}" y1="${gy}" x2="${plotRight}" y2="${gy}" stroke="${P.grid}" stroke-width="1"/>`;
+    svg += `<text x="${plotLeft - 6}" y="${gy + 4}" font-size="11" fill="${P.gridLabel}" text-anchor="end" font-family="monospace">${grid}</text>`;
+    grid += 20;
   }
-}
-hrPoints.forEach(([px, py]) => svg += `<circle cx="${px}" cy="${py}" r="2.3" fill="${C.hrDot}"/>`);
 
-svg += `</svg>`;
-document.getElementById("chart").innerHTML = svg;
+  // x labels + bars + hr points
+  const hrPoints = [];
+  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  buckets.forEach((bucket, i) => {
+    const bandLeft = plotLeft + bandW * i;
+    const cx = bandLeft + bandW / 2;
+    const isToday = bucket.key === `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const lc = isToday ? P.primary : P.onSurfaceVariant;
+    svg += `<text x="${cx}" y="${H - 22}" font-size="11" fill="${lc}" text-anchor="middle">${WEEKDAYS[bucket.date.getDay()]}</text>`;
+    svg += `<text x="${cx}" y="${H - 8}" font-size="11" fill="${lc}" text-anchor="middle">${bucket.date.getDate()}</text>`;
+    if (bucket.list.length === 0) return;
+    const dayReadings = readings.filter(r => bucket.list.includes(r[0]));
+    const n = dayReadings.length;
+    const slot = bandW / n;
+    const barWidth = Math.min(14, slot * 0.34);
+    dayReadings.forEach((r, j) => {
+      const x = bandLeft + slot * (j + 0.5);
+      const ySys = y(r[1]), yDia = y(r[2]);
+      svg += `<line x1="${x}" y1="${ySys}" x2="${x}" y2="${yDia}" stroke="${P.primary}" stroke-width="${barWidth}" stroke-linecap="round"/>`;
+      svg += `<circle cx="${x}" cy="${ySys}" r="${barWidth * 0.62}" fill="${P.cap}"/>`;
+      hrPoints.push([x, y(r[3])]);
+    });
+  });
+
+  // hr dotted line (dots every 5px, r=1.3) + value dots (r=2.3)
+  for (let k = 0; k < hrPoints.length - 1; k++) {
+    const [ax, ay] = hrPoints[k], [bx, by] = hrPoints[k + 1];
+    const dist = Math.hypot(bx - ax, by - ay);
+    for (let d = 0; d < dist; d += 5) {
+      const t = d / dist;
+      svg += `<circle cx="${ax + (bx - ax) * t}" cy="${ay + (by - ay) * t}" r="1.3" fill="${P.hrLine}"/>`;
+    }
+  }
+  hrPoints.forEach(([px, py]) => svg += `<circle cx="${px}" cy="${py}" r="2.3" fill="${P.hrDot}"/>`);
+
+  svg += `</svg>`;
+  return svg;
+}
+
+document.getElementById("chart-light").innerHTML = renderChart(C.light);
+document.getElementById("chart-dark").innerHTML = renderChart(C.dark);
 </script>
 </body>
 </html>

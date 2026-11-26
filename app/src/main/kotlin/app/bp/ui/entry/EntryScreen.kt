@@ -67,55 +67,82 @@ fun EntryScreen(
     onCancel: () -> Unit,
     onOk: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp),
+    // Surface, not a bare Column: it provides LocalContentColor = onSurface,
+    // the color plain Texts fall back to. Without it they render Color.Black
+    // and are invisible on a dark background (the v0.1.2 device report).
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        // Top row: title + a Cancel that is always visible and easy to hit.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("New reading", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.weight(1f))
-            FilledTonalButton(
-                onClick = onCancel,
-                enabled = ui.digits.isNotEmpty(),
-                modifier = Modifier.testTag("cancel-top"),
-            ) {
-                Text("Cancel")
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Live display: the star of the screen, takes all remaining space.
-        Box(
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center,
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp),
         ) {
-            EntryDisplay(ui)
-        }
+            // Top row: title + a Cancel that is always visible and easy to hit.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("New reading", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.weight(1f))
+                FilledTonalButton(
+                    onClick = onCancel,
+                    enabled = ui.digits.isNotEmpty(),
+                    modifier = Modifier.testTag("cancel-top"),
+                ) {
+                    Text("Cancel")
+                }
+            }
 
-        // Confirm bar: slides in exactly when the stream parses. It sits in
-        // the layout flow above the numpad, so it can never be pushed
-        // off-screen.
-        AnimatedVisibility(
-            visible = ui.result is ParseResult.Parsed && !ui.editing,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-        ) {
-            ConfirmBar(onCancel = onCancel, onEdit = onEdit, onOk = onOk)
-        }
+            Spacer(Modifier.height(8.dp))
 
-        Numpad(onDigit = onDigit, onBackspace = onBackspace)
+            // Live display: the star of the screen, takes all remaining space.
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                EntryDisplay(ui)
+            }
 
-        Spacer(Modifier.height(16.dp))
+            // Confirm bar: slides in exactly when the stream parses. It sits in
+            // the layout flow above the numpad, so it can never be pushed
+            // off-screen.
+            AnimatedVisibility(
+                visible = ui.result is ParseResult.Parsed && !ui.editing,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            ) {
+                ConfirmBar(onCancel = onCancel, onEdit = onEdit, onOk = onOk)
+            }
+
+            Numpad(onDigit = onDigit, onBackspace = onBackspace)
+
+            // Non-interactive strip below the last key row. It lifts the keys
+            // off the very bottom edge so they never sit in the zone where a
+            // gesture-nav bar reveals itself, and it carries the format hint
+            // that was in the empty display (which disappears after the first
+            // digit, so the hint had a short life there).
+            EntryFooter()
+            }
     }
+}
+
+/** Muted format example below the numpad; not a button, never competes for touch. */
+@Composable
+private fun EntryFooter() {
+    Text(
+        "e.g. 1218171 → 121 / 81 / 71",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+        modifier = Modifier
+            .testTag("entry-footer")
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 16.dp),
+    )
 }
 
 /** "Save this reading?" with Cancel / Edit / OK. */
@@ -171,12 +198,6 @@ private fun EntryDisplay(ui: EntryUi) {
                         "Type your reading",
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "e.g. 1218171 → 121 / 81 / 71",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                     )
                 } else {
                     DigitStream(ui.digits, colors.onSurface)

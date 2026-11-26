@@ -102,7 +102,7 @@ fun ReadingList(
                     color = colors.primary,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(colors.surface)
+                        .background(colors.surfaceContainer)
                         .padding(horizontal = 12.dp)
                         .padding(top = 10.dp, bottom = 2.dp),
                 )
@@ -121,7 +121,6 @@ private fun ReadingRow(r: Reading, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.background)
             .padding(horizontal = 12.dp)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,

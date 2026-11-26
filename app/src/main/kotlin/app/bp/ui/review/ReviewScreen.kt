@@ -1,6 +1,8 @@
 package app.bp.ui.review
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.MonitorHeart
@@ -25,6 +28,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -102,23 +106,47 @@ fun ReviewScreen(
             when (tab) {
                 ReviewTab.Chart -> {
                     if (chartReadings.isEmpty()) EmptyState(onNewEntry)
-                    else BpChart(readings = chartReadings)
+                    else ContentCard(Modifier.weight(1f)) {
+                        BpChart(readings = chartReadings)
+                    }
                 }
-                ReviewTab.List -> ReadingList(
-                    readings = allReadings,
-                    onDelete = { r ->
-                        onDelete(r)
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = "Reading deleted",
-                                actionLabel = "Undo",
-                            )
-                            if (result == SnackbarResult.ActionPerformed) onRestore(r)
-                        }
-                    },
-                )
+                ReviewTab.List -> ContentCard(Modifier.weight(1f)) {
+                    ReadingList(
+                        readings = allReadings,
+                        onDelete = { r ->
+                            onDelete(r)
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Reading deleted",
+                                    actionLabel = "Undo",
+                                )
+                                if (result == SnackbarResult.ActionPerformed) onRestore(r)
+                            }
+                        },
+                    )
+                }
             }
         }
+    }
+}
+
+/**
+ * The delineated background for chart and list: a raised, bordered card so
+ * the content reads as a self-contained surface even when there are only a
+ * few entries.
+ */
+@Composable
+private fun ContentCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(12.dp)) { content() }
     }
 }
 
